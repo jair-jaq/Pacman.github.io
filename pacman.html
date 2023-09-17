@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pac-Man</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background-color: rgb(0, 0, 0);  
+        }
+
+        #audio-button {
+            position: absolute;
+            bottom: 590px;
+            left: 50px;
+            background-color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <canvas id="Pac-Man" width="800" height="800"></canvas>
+
+    <audio id="theme" loop autoplay controls style="display: none;">
+        <source src="https://drive.google.com/uc?export=download&id=1Z7VzyuaBU87KJeogu4apvr_hzBCze9qP" type="audio/mpeg"/>
+        </audio>
+
+        <button id="audio-button" onclick="toggleAudio()">Reproducir/Parar Música</button>
+
+        <audio id="soundmove" src="https://drive.google.com/uc?export=download&id=1PNMXLVjSxl-QCXLTw1zrByLZGSflEEzn"></audio>
+       
+        <button id="reiniciar-button" style="display: none; font-size: 24px; width: 150px; height: 70px; position: absolute; left: 30%; top: 33%; transform: translate(-50%, -50%);">Volver a Jugar</button>
+
+
+
+        
+        <script>
+          const audio = document.getElementById("theme");
+        
+          function toggleAudio() {
+            if (audio.paused) {
+              audio.play(); // Reproducir si está pausado
+            } else {
+              audio.pause(); // Pausar si está reproduciendo
+            }
+          }
+        </script>
+
+    <script>
+        var canvas = document.getElementById("Pac-Man");
+        var ctx = canvas.getContext("2d");
+
+ let x = 50, y = 50, dir = 0, w = 30, h = 30;
+        let t_x = 50, t_y = 50, t_w = 13, t_h = 13;
+        let puntosRecogidos = 0;
+        var vidas = 3; // Inicialmente, el jugador tiene 3 vidas
+        
+        function reiniciarJuego() {
+    // Restablecer las posiciones iniciales de los enemigos
+    enemigos.forEach(function (enemigo, index) {
+        enemigo.x = posicionesInicialesEnemigos[index].x;
+        enemigo.y = posicionesInicialesEnemigos[index].y;
+    });
+
+    // Restablecer la puntuación y los puntos
+    puntuacion = 0;
+    puntos = 0;
+
+    // Actualizar la pantalla del juego
+    repaint();
+}
+
+var reiniciarButton = document.getElementById("reiniciar-button");
+reiniciarButton.addEventListener("click", function () {
+    // Reiniciar el juego cuando se haga clic en "Volver a Jugar"
+    gameover = false; // Restablecer la variable gameover
+    reiniciarButton.style.display = "none"; // Ocultar el botón de "Volver a Jugar"
+    reiniciarJuego(); // Llama a la función para reiniciar el juego
+});
+
+        
+        var enemigos = [
+    { x: 400, y: 730, velocidad: 1.5 },
+    { x: 730, y: 100, velocidad: 1.5 },
+    { x: 400, y: 400, velocidad: 1.5 }
+];
+
+// Definir una función para reiniciar el juego
+function reiniciarJuego() {
+    // Restablece las posiciones del jugador y enemigos, así como cualquier otro estado del juego.
+    x = 50;
+    y = 50;
+    // Restablece las posiciones de los enemigos según tus necesidades.
+    enemigos.forEach(function (enemigo, index) {
+        enemigo.x = 200 * (index + 1);
+        enemigo.y = 720;
+    });
+    // Disminuye el número de vidas
+    vidas--;
+
+    // Si el jugador se queda sin vidas, muestra el mensaje de "Game Over" y reinicia las vidas.
+    if (vidas <= 0) {
+        mostrarGameOver();
+        vidas = 3; // Reinicia las vidas
+    }
+}
+
+
+
+
+var gameover = false;
+
+// ...
+
+function mostrarGameOver() {
+    gameover = true; // Establece la variable gameover en true
+    ctx.fillStyle = 'red'; // Color del texto del "Game Over"
+    ctx.font = '40px Arial'; // Establece la fuente y el tamaño del texto
+    ctx.fillText('Game Over', canvas.width / 2 - 80, canvas.height / 2); // Dibuja el mensaje de "Game Over" en el centro del lienzo
+
+    // Muestra el botón de "Volver a Jugar"
+    var reiniciarButton = document.getElementById("reiniciar-button");
+    reiniciarButton.style.display = "block";
+}
+
+
+// Agrega un manejador de eventos al botón de "Volver a Jugar"
+var reiniciarButton = document.getElementById("reiniciar-button");
+reiniciarButton.addEventListener("click", function () {
+    // Reinicia el juego cuando se haga clic en "Volver a Jugar"
+    gameover = false; // Restablece la variable gameover
+    reiniciarButton.style.display = "none"; // Oculta el botón de "Volver a Jugar"
+    reiniciarJuego(); // Llama a la función para reiniciar el juego
+});
+
+
+function mostrarBotonReiniciar() {
+    // Muestra el botón de reiniciar
+    reiniciarButton.style.display = "block";
+    reiniciarButton.style.position = "absolute";
+    reiniciarButton.style.left = "50%";
+    reiniciarButton.style.top = "50%";
+    reiniciarButton.style.transform = "translate(-50%, -50%)";
+
+    // Agrega un manejador de eventos al botón para reiniciar el juego
+    reiniciarButton.onclick = function () {
+        reiniciarJuego();
+    };
+}
+
+
+
+function updateEnemigos() {
+    enemigos.forEach(function (enemigo) {
+        var dx = x - enemigo.x;
+        var dy = y - enemigo.y;
+        var distancia = Math.sqrt(dx * dx + dy * dy);
+
+        var direccionX = dx / distancia;
+        var direccionY = dy / distancia;
+
+        var nextX = enemigo.x + direccionX * enemigo.velocidad;
+        var nextY = enemigo.y + direccionY * enemigo.velocidad;
+
+        if (!colisionConPared(nextX, nextY, w, h)) {
+            enemigo.x = nextX;
+            enemigo.y = nextY;
+        }
+
+        if (colisionConPersonaje(enemigo.x, enemigo.y, w, h)) {
+            // Realiza una acción cuando un enemigo colisiona con el personaje
+            reiniciarJuego();
+            
+        }
+
+        // Dibuja al enemigo en su nueva posición
+        ctx.fillStyle = "red"; // Color del enemigo
+        ctx.fillRect(enemigo.x, enemigo.y, w, h);
+    });
+}
+
+function colisionConPersonaje(xE, yE, wE, hE) {
+    return (
+        x < xE + wE &&
+        x + w > xE &&
+        y < yE + hE &&
+        y + h > yE
+    );
+}
+
+function colisionConPared(nextX, nextY, w, h) {
+    // Calcula las coordenadas de la celda en la que estaría el enemigo después del movimiento
+    const columnaNueva = Math.floor(nextX / anchoCelda);
+    const filaNueva = Math.floor(nextY / altoCelda);
+
+    // Verifica si la próxima posición colisiona con una pared (valor 1 en el mapa)
+    if (mapa[filaNueva] && mapa[filaNueva][columnaNueva] === 1) {
+        return true; // Hay colisión
+    }
+
+    return false; // No hay colisión
+}
+
+    
+    function verificarColisionEnemigo(dx, dy) {
+    // Calcula las coordenadas de la próxima posición del enemigo
+    const nextX = enemigo.x + dx;
+    const nextY = enemigo.y + dy;
+
+    // Calcula las coordenadas de la celda en la que estaría el enemigo después del movimiento
+    const columnaNueva = Math.floor(nextX / anchoCelda);
+    const filaNueva = Math.floor(nextY / altoCelda);
+
+    // Verifica si la próxima posición colisiona con una pared (valor 1 en el mapa)
+    if (mapa[filaNueva] && mapa[filaNueva][columnaNueva] === 1) {
+        return true; // Hay colisión con una pared
+    }
+
+    return false; // No hay colisión
+}
+
+
+
+        class Rectangulo {
+    constructor(posicionX, posicionY, ancho, alto) {
+        this.posicionX = posicionX;
+        this.posicionY = posicionY;
+        this.ancho = ancho;
+        this.alto = alto;
+    }
+
+    pintarRectangulo(color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(this.posicionX, this.posicionY, this.ancho, this.alto);
+    }
+
+    
+
+}
+
+        document.addEventListener("keydown", (e) => {
+            let dx = 0, dy = 0;
+            switch (e.keyCode) {
+                case 39:
+                    dir = e.keyCode;
+                    dx = 3; // Derecha
+                    break;
+                case 37:
+                    dir = e.keyCode;
+                    dx = -3; // Izquierda
+                    break;
+                case 38:
+                    dir = e.keyCode;
+                    dy = -3; // Arriba
+                    break;
+                case 40:
+                    dir = e.keyCode;
+                    dy = 3; // Abajo
+                    break;
+            }
+
+            const soundmove = document.getElementById("soundmove");
+            soundmove.currentTime = 0; // Reinicia el sonido si ya está reproduciendo
+            soundmove.play();
+
+            // Verificar colisión antes de actualizar la posición
+            if (!verificarColision(dx, dy)) {
+                x += dx;
+                y += dy;
+            }
+        });
+        function update() {
+    let dx = 0, dy = 0;
+
+    switch (dir) {
+        case 39: // derecha
+            dx = 3;
+            break;
+        case 37: // izquierda
+            dx = -3;
+            break;
+        case 38: // arriba
+            dy = -3;
+            break;
+        case 40: // abajo
+            dy = 3;
+            break;
+    }
+
+       // Calcula las coordenadas de la próxima posición
+       const nextX = x + dx;
+    const nextY = y + dy;
+
+    // Verifica si la próxima posición colisiona con una pared
+    if (!colisionConPared(nextX, nextY, w, h)) {
+        // No hay colisión, permite que el personaje se mueva
+        x = nextX;
+        y = nextY;
+
+        // Verifica si el personaje ha salido de los límites del canvas y ajusta su posición en consecuencia
+        if (x > canvas.width) { x = -w; }
+        if (x < -w) { x = canvas.width; }
+        if (y > canvas.height) { y = -h; }
+        if (y < -h) { y = canvas.height; }
+    }
+    repaint();
+    window.requestAnimationFrame(update);
+}
+
+function colisionConPared(nextX, nextY, w, h) {
+    // Calcula las coordenadas de la celda en la que estaría el personaje después del movimiento
+    const columnaNueva = Math.floor(nextX / anchoCelda);
+    const filaNueva = Math.floor(nextY / altoCelda);
+
+    // Verifica si la próxima posición colisiona con una pared (valor 1 en el mapa)
+    if (mapa[filaNueva] && mapa[filaNueva][columnaNueva] === 1) {
+        return true; // Hay colisión
+    }
+
+    return false; // No hay colisión
+}
+        function mostrarBotonReiniciar() {
+    // Muestra el botón de reiniciar
+    reiniciarButton.style.display = "block";
+    reiniciarButton.style.position = "absolute";
+    reiniciarButton.style.left = "50%";
+    reiniciarButton.style.top = "50%";
+    reiniciarButton.style.transform = "translate(-50%, -50%)";
+}
+
+
+        function drawScore() {
+            ctx.fillStyle = 'white'; // Color del texto del contador de puntos
+            ctx.font = '20px Arial'; // Establece la fuente y el tamaño del texto
+            ctx.fillText(`Puntos: ${puntosRecogidos}`, 10, 30); // Dibuja el contador de puntos en la posición deseada
+
+            if (puntosRecogidos >= 133) {
+        ctx.fillText('¡Ganaste!', canvas.width / 2 - 50, canvas.height / 2);
+        mostrarBotonReiniciar();
+    }
+        }
+        
+
+
+
+
+        function repaint() {
+
+            if (gameover) {
+        return;
+    }
+            // Pintar el fondo
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Pintar el mapa
+            for (let fila = 0; fila < mapa.length; fila++) {
+                for (let columna = 0; columna < mapa[fila].length; columna++) {
+                    const x = columna * anchoCelda;
+                    const y = fila * altoCelda;
+
+                    if (mapa[fila][columna] === 1) {
+                        ctx.fillStyle = "blue"; // Paredes en azul
+                    } else {
+                        ctx.fillStyle = 'black'; // Pasillos en negro
+                    }
+
+                    ctx.fillRect(x, y, anchoCelda, altoCelda);
+                }
+
+        }
+
+
+            ctx.fillStyle = random_rgba();
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+
+    // Pintar y actualizar los puntos en el centro de las celdas vacías que no han sido recogidos
+    ctx.fillStyle = 'white'; // Color de los puntos
+
+    for (let fila = 0; fila < mapa.length; fila++) {
+        for (let columna = 0; columna < mapa[fila].length; columna++) {
+            const punto = mapa[fila][columna];
+
+            // Calcula las coordenadas (x, y) en el centro de la celda actual
+            const puntoX = columna * anchoCelda + anchoCelda / 2;
+            const puntoY = fila * altoCelda + altoCelda / 2;
+
+            // Verifica si el valor en el mapa es igual a 0 (celda vacía) y si estamos en la mitad de un pasillo
+            if (punto === 0 && (columna % 2 === 1 || fila % 2 === 1)) {
+                // Verifica si el personaje está sobre el punto
+                if (x < puntoX + t_w && x + w > puntoX && y < puntoY + t_h && y + h > puntoY) {
+                    // Si el personaje está sobre el punto, lo marcamos como recogido
+                    puntosRecogidos++; // Incrementar el contador de puntos
+                    // Marcamos la celda como una pared en el mapa (eliminamos el punto)
+                    mapa[fila][columna] = 2;
+                } else {
+                    // Si el personaje no está sobre el punto, lo dibujamos
+                    ctx.beginPath();
+                    ctx.arc(puntoX, puntoY, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+
+    // ...
+
+    // Dibuja el número actual de vidas en la esquina superior izquierda
+    ctx.fillStyle = 'white'; // Color del texto de las vidas
+    ctx.font = '20px Arial'; // Establece la fuente y el tamaño del texto
+    ctx.fillText(`Vidas: ${vidas}`, 710, 30); // Dibuja el número de vidas en la posición deseada
+
+    // ...
+    updateEnemigos();
+    drawScore();
+}
+
+        function random_rgba() {
+            var o = Math.round, r = Math.random, s = 255;
+            return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',' + r().toFixed(1) + ')';
+        }
+
+        window.requestAnimationFrame = (function () {
+            return window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                function (callback) {
+                    window.setTimeout(callback, 17);
+                };
+        }());
+
+        function verificarColision(dx, dy) {
+            // Calcula las coordenadas de la próxima posición
+            const nextX = x + dx;
+            const nextY = y + dy;
+
+            // Calcula las coordenadas de la celda en la que estaría el personaje después del movimiento
+            const columnaNueva = Math.floor(nextX / anchoCelda);
+            const filaNueva = Math.floor(nextY / altoCelda);
+
+            // Verifica si la próxima posición colisiona con una pared (valor 1 en el mapa)
+            if (mapa[filaNueva][columnaNueva] === 1) {
+                return true; // Hay colisión
+            }
+
+            return false; // No hay colisión
+        }
+
+        // Inicia el bucle de animación
+        window.requestAnimationFrame(update);
+
+        // Definir el mapa de Pac-Man
+        const mapa = [
+            // Filas de ejemplo (puedes ajustarlas según tu diseño)
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1 ,1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+
+        const anchoCelda = canvas.width / mapa[0].length;
+        const altoCelda = canvas.height / mapa.length;
+
+      /*  const puntos = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+            [1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1],
+            [1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1],
+            [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+            [1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1],
+            [1, 2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1],
+            [1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1],
+            [2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2],
+            [1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1],
+            [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+            [1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1],
+            [1, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1],
+            [1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+            [1, 2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1],
+            [1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1],
+            [1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1]
+        ];¨*/
+
+        function dibujarMapa() {
+            for (let i = 0; i < mapa.length; i++) {
+                for (let j = 0; j < mapa[i].length; j++) {
+                    if (mapa[i][j] === 1) {
+                        ctx.fillStyle = "blue";
+                        ctx.fillRect(j * anchoCelda, i * altoCelda, anchoCelda, altoCelda);
+                    }
+                    else if (mapa[i][j] === 0) {
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(j * anchoCelda, i * altoCelda, anchoCelda, altoCelda);
+                    }
+                }
+            }
+        }
+
+        dibujarMapa();
+
+        // ...
+
+// Función principal que se ejecuta cuando inicia el juego
+
+
+// Llama a la función para iniciar el juego
+iniciarJuego();
+
+
+        
+
+    </script>
+</body>
+</html>
